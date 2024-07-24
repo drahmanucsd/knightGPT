@@ -74,14 +74,6 @@ You can customize knightGPT's behavior by modifying the following variables in `
 - Improve embedding caching mechanism.
 - Implement a more user-friendly interface.
 
-## Contributing
-
-We welcome contributions to knightGPT! Please feel free to submit pull requests, report issues, or suggest improvements.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - The Ollama team for their excellent model serving framework
