@@ -5,4 +5,4 @@ rag/graph/publications_manifest.json
 rag/graph/graph_publications.gexf
 
 # Ignore all raw publication files
-rag/publications_raw/
+rag/publications_raw/*
