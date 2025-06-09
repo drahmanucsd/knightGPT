@@ -62,7 +62,7 @@ def main():
             top_k=args.top_k
         )
 
-        print(pubs)
+        print([p[0] for p in pubs])
         # 2) Assemble context
         context = assemble_context(pubs)
 
