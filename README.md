@@ -1,84 +1,161 @@
-# knightGPT
+#KnightGPT
+## Overview
 
-knightGPT is a Retrieval Augmented Generation (RAG) system that integrates with Ollama for model support. This project enhances traditional Language Models (LLMs) by incorporating text-based retrieval for more contextual and relevant responses.
-
-## Features
-
-- **Retrieval Augmented Generation (RAG)**: Utilizes embeddings to find relevant context for generating responses.
-- **Ollama Integration**: Seamlessly integrates with Ollama for efficient local model deployment and inference.
-- **Flexible Embedding Models**: Currently supports 'nomic-embed-text' and 'bge-base-en-v1.5' for generating embeddings.
-- **Customizable System Prompt**: Easily adaptable for various domains and use cases.
-- **Efficient Embedding Management**: Saves and loads embeddings to/from JSON files for faster subsequent runs.
-
-## Prerequisites
-
-- Python 3.8+
-- Git
-- [Ollama](https://ollama.ai/) installed and configured
-
-## Installation
-
-1. Clone the repository:
-
-   ```
-   git clone https://github.com/yourusername/knightGPT.git
-   cd knightGPT
-   ```
-
-2. Create and activate a virtual environment:
-
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-
-3. Install the required dependencies:
-   ```
-   pip install ollama numpy
-   ```
-
-## Usage
-
-1. Ensure Ollama is running and the desired models are available (llama3, bge-base-en-v1.5, and optionally nomic-embed-text and mistral).
-
-2. Place your text file (e.g., "peter-pan.txt") in the project directory.
-
-3. Run the main application:
-
-   ```
-   python main.py
-   ```
-
-4. Enter your question when prompted.
-
-## Configuration
-
-You can customize knightGPT's behavior by modifying the following variables in `main.py`:
-
-- `SYSTEM_PROMPT`: Adjust the system prompt to change the behavior of the assistant.
-- Embedding model: Change `bge-base-en-v1.5` to `nomic-embed-text` or another compatible model.
-- LLM model: Change `llama3` to `mistral` or another Ollama-supported model.
-- Number of similar chunks: Modify the `[:5]` in `find_most_similar` to retrieve more or fewer chunks.
-
-## How It Works
-
-1. The script parses a text file into paragraphs.
-2. It generates embeddings for each paragraph using the specified embedding model.
-3. When a question is asked, it finds the most similar paragraphs using cosine similarity.
-4. The relevant paragraphs are used as context for the LLM to generate an answer.
-
-## Future Improvements
-
-- Implement graph-based RAG for more sophisticated retrieval.
-- Add support for multiple document types.
-- Improve embedding caching mechanism.
-- Implement a more user-friendly interface.
-
-## Acknowledgments
-
-- The Ollama team for their excellent model serving framework
-- Creators of the embedding models and LLMs used in this project
+This repository provides a **Graph-RAG** (Retrieval-Augmented Generation) pipeline tailored for **microbiome literature**. It ingests raw `.txt` or `.pdf` papers, uses an LLM to extract metadata (title, authors, year, abstract), builds a publication graph, and lets you query it via embeddings + graph‐based retrieval before answering with a local LLM (Ollama/LLaMA3).
 
 ---
 
-Happy querying with knightGPT! 🚀📚
+## Repository Structure
+
+```
+.
+├── README.md
+├── rag
+│   ├── main.py                   # CLI entrypoint for the Microbiome assistant
+│   └── publications_raw          # Drop your .txt/.pdf papers here
+└── rag/graph
+    ├── __init__.py
+    ├── build_publications.py     # Ingest + metadata‐LLM + embedding + graph build
+    ├── retrieve_publications.py  # Seed retrieval over Publication nodes
+    ├── store.py                  # Simple NetworkX wrapper for Publication graph
+    ├── embeddings/               # Caches per‐publication embedding JSON files
+    ├── publications_manifest.json# Metadata + embeddings index
+    └── graph_publications.gexf   # Exported graph for use by retrieval
+```
+
+---
+
+## Prerequisites
+
+* **Python 3.10+**
+* Ollama CLI & Python bindings configured with a local LLaMA3 model
+* `pip install -r requirements.txt` dependencies:
+
+  ```txt
+  networkx
+  pdfplumber
+  ollama
+  numpy
+  pymupdf        # optional, if you switch to PyMuPDF for PDF extraction
+  ```
+
+---
+
+## Installation
+
+1. **Clone** the repo and enter it:
+
+   ```bash
+   git clone https://github.com/drahmanucsd/knightGPT.git
+   cd knightGPT
+   ```
+
+2. **Install** Python dependencies:
+
+   ```bash
+   pip install networkx pdfplumber ollama numpy
+   # optionally: pip install pymupdf
+   ```
+
+3. **Verify** your Ollama setup:
+
+   ```bash
+   ollama list
+   # ensure llama3 (or llama2) is available locally
+   ```
+
+---
+
+## Usage
+
+### 1. Add Publications
+
+Place your PDF or TXT files in:
+
+```
+rag/publications_raw/
+```
+
+Each file’s basename (e.g. `OMNICellTOSG.pdf`) becomes its publication ID.
+
+### 2. Build the Publications Graph
+
+Runs LLM metadata extraction, caches embeddings, and writes a GEXF graph.
+
+```bash
+python -m rag.graph.build_publications
+```
+
+* Outputs:
+
+  * `rag/graph/publications_manifest.json`
+  * `rag/graph/embeddings/<ID>.json`
+  * `rag/graph/graph_publications.gexf`
+
+### 3. Test Retrieval
+
+Query the publication graph for top-k relevant papers:
+
+```bash
+python -m rag.graph.retrieve_publications "gut microbiome butyrate" --top_k 3
+```
+
+You’ll see a ranked list of `[ID] Title (Year) — score: …`
+
+### 4. Run the Microbiome Assistant
+
+Launch the interactive CLI:
+
+```bash
+python -m rag.main
+```
+
+* **Prompt**: enter your question (e.g. “Which microbes produce butyrate in the human gut?”)
+* **Output**: the model cites only publication IDs and returns a concise, context-grounded answer.
+
+---
+
+## Configuration
+
+* **Embedding model**: change `--model bge-base-en-v1.5` to any supported Ollama embedder
+* **LLM model**: edit `chat(model="llama3",…)` in both `build_publications.py` and `main.py`
+* **Top-k**: adjust `--top_k` on both retrieval and `main.py` invocation
+
+---
+
+## Troubleshooting
+
+* **“CropBox missing” warnings**: harmless; suppress with:
+
+  ```python
+  import warnings
+  warnings.filterwarnings("ignore", message="CropBox missing")
+  ```
+
+* **PDF text jumbles**: consider switching to PyMuPDF:
+
+  ```python
+  import fitz
+  def extract_text(fp):
+      doc = fitz.open(str(fp))
+      return "\n\n".join(page.get_text("text") for page in doc)
+  ```
+
+* **Metadata parse failures**: check `[LLM meta]` debug prints for malformed JSON. Tighten the prompt or increase snippet length.
+
+* **Empty retrievals**: ensure embeddings ran successfully (`rag/graph/embeddings/…`) and that your query shares vocabulary with abstracts.
+
+---
+
+## Extending
+
+* **Citation edges**: add CrossRef lookups to create `cites` edges in `build_publications.py`.
+* **Entity nodes**: integrate NER (species, genes, pathways) and `mentions` edges for multi-hop queries.
+* **Full-text chunking**: split PDFs into passages and attach passage nodes for finer-grained retrieval.
+* **Persistent backend**: swap `networkx` + GEXF for Neo4j, RedisGraph + RedisVector, or Weaviate for scale.
+
+---
+
+## License
+
+This project is released under the MIT License. Feel free to copy, modify, and redistribute!
