@@ -1,0 +1,23 @@
+# Text extraction & parsing
+pdfminer-six==20250327
+
+# NLP & embeddings
+spacy==3.8.7
+en-core-web-sm==3.8.7
+sentence-transformers==4.1.0
+
+# Core scientific stack
+numpy==2.3.0
+scikit-learn==1.7.0
+networkx==3.5
+
+# Graph persistence (optional)
+py2neo==2021.1.5
+
+# Web/API (if you still use the FastAPI code)
+fastapi==0.78.0
+uvicorn[standard]==0.17.0
+pydantic==2.11.4
+
+# LLM client
+ollama==0.5.1
