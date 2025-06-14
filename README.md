@@ -16,11 +16,14 @@ This repository provides a **Graph-RAG** (Retrieval-Augmented Generation) pipeli
 └── rag/graph
     ├── __init__.py
     ├── build_publications.py     # Ingest + metadata‐LLM + embedding + graph build
+    ├── build_paragraph_graph.py  # Build paragraph-level graph with similarity edges
     ├── retrieve_publications.py  # Seed retrieval over Publication nodes
     ├── store.py                  # Simple NetworkX wrapper for Publication graph
     ├── embeddings/               # Caches per‐publication embedding JSON files
     ├── publications_manifest.json# Metadata + embeddings index
-    └── graph_publications.gexf   # Exported graph for use by retrieval
+    ├── paragraphs_manifest.json  # Paragraph nodes + metadata
+    ├── graph_publications.gexf   # Publication-level graph
+    └── graph_paragraphs.gexf     # Paragraph-level similarity graph
 ```
 
 ---
@@ -33,10 +36,10 @@ This repository provides a **Graph-RAG** (Retrieval-Augmented Generation) pipeli
 
   ```txt
   networkx
-  pdfplumber
+  pdfplumber     # preferred PDF text extractor
   ollama
   numpy
-  pymupdf        # optional, if you switch to PyMuPDF for PDF extraction
+  pymupdf        # optional fallback if pdfplumber isn't available
   ```
 
 ---
@@ -54,7 +57,7 @@ This repository provides a **Graph-RAG** (Retrieval-Augmented Generation) pipeli
 
    ```bash
    pip install networkx pdfplumber ollama numpy
-   # optionally: pip install pymupdf
+   # optionally: pip install pymupdf  # used if pdfplumber missing
    ```
 
 3. **Verify** your Ollama setup:
@@ -91,6 +94,20 @@ python -m rag.graph.build_publications
   * `rag/graph/publications_manifest.json`
   * `rag/graph/embeddings/<ID>.json`
   * `rag/graph/graph_publications.gexf`
+
+### 2b. Build the Paragraph Graph
+
+Generate paragraph-level nodes with similarity edges:
+
+```bash
+python -m rag.graph.build_paragraph_graph
+```
+
+* Outputs:
+
+  * `rag/graph/paragraphs_manifest.json`
+  * `rag/embeddings/paragraphs/`
+  * `rag/graph/graph_paragraphs.gexf`
 
 ### 3. Test Retrieval
 

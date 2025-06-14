@@ -13,14 +13,23 @@ EMB_DIR   = BASE_DIR.parent / "embeddings" / "publications"
 MANIFEST  = BASE_DIR / "publications_manifest.json"
 GRAPH_OUT = BASE_DIR / "graph_publications.gexf"
 
-import fitz, warnings
+import warnings
 
 def extract_text(fp: Path) -> str:
     if fp.suffix.lower() == ".pdf":
-        doc = fitz.open(str(fp))
-        return "\n\n".join(page.get_text("text") for page in doc)
-    else:
-        return fp.read_text(encoding="utf-8")
+        # Default to pdfplumber, fallback to PyMuPDF if available
+        try:
+            import pdfplumber
+        except Exception:
+            try:
+                import fitz
+            except Exception as exc:  # pragma: no cover - env dependent
+                raise RuntimeError("No PDF parser available") from exc
+            doc = fitz.open(str(fp))
+            return "\n\n".join(page.get_text("text") for page in doc)
+        with pdfplumber.open(str(fp)) as pdf:
+            return "\n\n".join((p.extract_text() or "") for p in pdf.pages)
+    return fp.read_text(encoding="utf-8")
 
 
 import re
