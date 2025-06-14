@@ -147,7 +147,15 @@ def ensure_embeddings(pubs: list[dict], emb_dir: Path, model_name: str="llama3")
             print(f"[embed] {pub['id']} → {model_name}")
             resp = embeddings(model=model_name, prompt=pub["abstract"])
             # unpack vector
-            if hasattr(resp, "dict"):
+            if hasattr(resp, "model_dump"):
+                d = resp.model_dump()
+                vec = next(
+                    v
+                    for v in d.values()
+                    if isinstance(v, list)
+                    and all(isinstance(x, (int, float)) for x in v)
+                )
+            elif hasattr(resp, "dict"):
                 d = resp.dict()
                 vec = next(v for v in d.values()
                            if isinstance(v, list) and all(isinstance(x,(int,float)) for x in v))

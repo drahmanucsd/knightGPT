@@ -94,7 +94,9 @@ def ensure_embeddings(texts: List[str], emb_dir: Path, model_name: str = "bge-ba
             vectors.append(json.loads(fp.read_text()))
             continue
         resp = embeddings(model=model_name, prompt=t)
-        if hasattr(resp, "dict"):
+        if hasattr(resp, "model_dump"):
+            vec = next(v for v in resp.model_dump().values() if isinstance(v, list))
+        elif hasattr(resp, "dict"):
             vec = next(v for v in resp.dict().values() if isinstance(v, list))
         elif isinstance(resp, dict) and "embeddings" in resp:
             vec = resp["embeddings"]
@@ -141,7 +143,7 @@ if __name__ == "__main__":
             text=p["text"],
             title=meta.get("title") or p["file_id"],
             authors=json.dumps(meta.get("authors", [])),
-            doi=meta.get("doi"),
+            doi=meta.get("doi") or "",
         )
 
     # add similarity edges (top 3 per node)

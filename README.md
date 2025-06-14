@@ -108,6 +108,7 @@ python -m rag.graph.build_paragraph_graph
   * `rag/graph/paragraphs_manifest.json`
   * `rag/embeddings/paragraphs/`
   * `rag/graph/graph_paragraphs.gexf`
+  * Paragraph nodes include their text along with title, authors and DOI metadata
 
 ### 3. Test Retrieval
 
